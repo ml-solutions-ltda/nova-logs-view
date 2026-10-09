@@ -1,6 +1,6 @@
 <template>
     <div class="logs-view">
-        <Head title="Visibilidade de logs" />
+        <Head v-if="!legacyNova" title="Visibilidade de logs" />
 
         <header class="logs-view__header">
             <div>
@@ -46,7 +46,7 @@
 
         <div v-if="limitations.truncated" class="logs-notice" role="status">
             A visualização foi limitada para manter o painel responsivo.
-            <span v-if="limitations.truncated_files?.length">
+            <span v-if="limitations.truncated_files && limitations.truncated_files.length">
                 Arquivos parciais: {{ limitations.truncated_files.join(", ") }}.
             </span>
         </div>
@@ -452,7 +452,7 @@
                             <td>{{ entry.channel }}</td>
                             <td>
                                 <span
-                                    v-if="entry.diagnostic?.occurrences > 1"
+                                    v-if="entry.diagnostic && entry.diagnostic.occurrences > 1"
                                     class="logs-recurrence"
                                     :title="`Mesma assinatura entre ${date(entry.diagnostic.first_seen)} e ${date(entry.diagnostic.last_seen)}`"
                                 >
@@ -516,7 +516,7 @@
                     <div>
                         <p>Detalhes do evento</p>
                         <h2 id="log-detail-title">
-                            {{ selected?.type || "Carregando…" }}
+                            {{ (selected && selected.type) || "Carregando…" }}
                         </h2>
                     </div>
                     <button
@@ -682,6 +682,7 @@ const emptySummary = () => ({
 });
 
 export default {
+    props: { legacyNova: { type: Boolean, default: false } },
     data: () => ({
         loading: true,
         error: null,
@@ -758,16 +759,20 @@ export default {
         this.load();
     },
     beforeUnmount() {
-        window.removeEventListener("keydown", this.handleKeydown);
-        document.removeEventListener(
-            "visibilitychange",
-            this.handleVisibilityChange,
-        );
-        clearTimeout(this.timer);
-        clearTimeout(this.copyResetTimer);
-        clearTimeout(this.autoRefreshTimer);
+        this.dispose();
+    },
+    beforeDestroy() {
+        this.dispose();
     },
     methods: {
+        dispose() {
+            ++this.requestSequence;
+            window.removeEventListener("keydown", this.handleKeydown);
+            document.removeEventListener("visibilitychange", this.handleVisibilityChange);
+            clearTimeout(this.timer);
+            clearTimeout(this.copyResetTimer);
+            clearTimeout(this.autoRefreshTimer);
+        },
         async load() {
             clearTimeout(this.autoRefreshTimer);
             const sequence = ++this.requestSequence;

@@ -4,8 +4,10 @@ namespace MlSolutions\NovaLogsView;
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Nova\Http\Middleware\Authenticate;
 use Laravel\Nova\Nova;
 use MlSolutions\NovaLogsView\Http\Middleware\Authorize;
+use MlSolutions\NovaLogsView\Support\NovaCompatibility;
 
 class ToolServiceProvider extends ServiceProvider
 {
@@ -14,6 +16,8 @@ class ToolServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $this->loadViewsFrom(__DIR__.'/../resources/views', 'nova-logs-view');
+
         $this->app->booted(function () {
             $this->routes();
         });
@@ -32,10 +36,12 @@ class ToolServiceProvider extends ServiceProvider
             return;
         }
 
-        Nova::router(['nova', 'nova.auth', Authorize::class], 'nova-logs-view')
-            ->group(__DIR__.'/../routes/inertia.php');
+        if (NovaCompatibility::usesInertia()) {
+            Nova::router(['nova', Authenticate::class, Authorize::class], 'nova-logs-view')
+                ->group(__DIR__.'/../routes/inertia.php');
+        }
 
-        Route::middleware(['nova', 'nova.auth', Authorize::class])
+        Route::middleware(['nova', Authenticate::class, Authorize::class])
             ->prefix('nova-vendor/nova-logs-view')
             ->group(__DIR__.'/../routes/api.php');
     }

@@ -1,7 +1,5 @@
 import Tool from './pages/Tool'
 
-Nova.inertia('NovaLogsView', Tool)
-
-Nova.booting((app, store) => {
-  //
+Nova.booting(() => {
+  Nova.inertia('NovaLogsView', Tool)
 })

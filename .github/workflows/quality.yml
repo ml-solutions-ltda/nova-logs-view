@@ -5,25 +5,53 @@ on:
 permissions:
   contents: read
 jobs:
-  test:
+  backend:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { laravel: '8', php: '8.1', testbench: '^6.0', phpunit: '^9.6' }
+          - { laravel: '9', php: '8.1', testbench: '^7.0', phpunit: '^9.6' }
+          - { laravel: '10', php: '8.1', testbench: '^8.0', phpunit: '^10.5' }
+          - { laravel: '11', php: '8.2', testbench: '^9.0', phpunit: '^11.5' }
+          - { laravel: '12', php: '8.2', testbench: '^10.0', phpunit: '^11.5' }
+          - { laravel: '13', php: '8.3', testbench: '^11.0', phpunit: '^12.0' }
+    name: Laravel ${{ matrix.laravel }} / PHP ${{ matrix.php }}
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
+          php-version: ${{ matrix.php }}
           tools: composer:v2
           coverage: none
       - run: composer validate --strict
-      - run: composer install --working-dir=tests --no-interaction --prefer-dist
-      - run: php tests/vendor/bin/phpunit --fail-on-warning
+      - name: Select framework test fixture
+        run: composer require --working-dir=tests --dev --no-update "orchestra/testbench:${{ matrix.testbench }}" "phpunit/phpunit:${{ matrix.phpunit }}" "laravel/framework:^${{ matrix.laravel }}.0"
+      - name: Install isolated test dependencies
+        # Legacy frameworks are tested intentionally. This affects only the disposable test fixture.
+        run: composer update --working-dir=tests --no-interaction --prefer-dist --no-security-blocking
+      - name: Test backend and all three Nova interface contracts
+        run: |
+          for major in 3 4 5; do
+            NOVA_TEST_MAJOR=$major php tests/vendor/bin/phpunit --fail-on-warning
+          done
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            build/nova3/package-lock.json
       - run: npm ci
-      - run: npm test
-      - run: node tests/check-dist.mjs
-      - run: npm run production
-      - name: Verify shipped asset integrity
+      - run: npm run install:legacy
+      - name: Check shipped bundles
         run: node tests/check-dist.mjs
+      - run: npm test
+      - run: npm run production
+      - name: Test rebuilt bundles
+        run: npm test && node tests/check-dist.mjs

@@ -1,13 +1,27 @@
 # Nova Logs View
 
-Read-only log explorer for **Laravel 12, Nova 5 and PHP 8.2+**. Includes dashboard summaries, file/date/level filters, pagination, recurring error fingerprints, sanitized details and text/Markdown/AI clipboard formats. The interface currently uses Brazilian Portuguese.
+Read-only log explorer for **Nova 3, 4 or 5, Laravel 8–13 and PHP 8.1+**. Includes dashboard summaries, file/date/level filters, pagination, recurring error fingerprints, sanitized details and text/Markdown/AI clipboard formats. The interface currently uses Brazilian Portuguese.
+
+## Compatibility
+
+| Nova | Frontend adapter | Laravel constraints |
+| --- | --- | --- |
+| 3.x | Vue 2.6 / Vue Router, native Blade sidebar | The versions allowed by your Nova 3 release, intersected with Laravel 8–13 |
+| 4.x | Vue 3 / Inertia, native MenuSection | Laravel 8–11 according to the installed Nova 4 manifest |
+| 5.x | Vue 3 / Inertia, native MenuSection | Laravel 10–13; Laravel 13 requires a Nova release that accepts it (for example 5.10.1) |
+
+The package backend allows Laravel 8.83.4+, 9, 10, 11, 12 and 13 and Carbon 2 or 3. This does **not** make every Nova/Laravel pair compatible: Composer also enforces Nova's own requirements. PHP 8.1 is this package's minimum; Laravel 11/12 require 8.2 and Laravel 13 requires 8.3. Other host dependencies may impose higher requirements.
+
+The correct bundle is selected automatically. No configuration switch or consumer frontend build is needed. Backend CI tests each Laravel major and public Nova adapter contracts; frontend CI mounts the shipped bundles with Vue 2.6, Vue 3.2 (Nova 4) and Vue 3.5 (Nova 5). A contract test is not a complete licensed Nova installation smoke. See [compatibility evidence](docs/compatibility.md).
+
+Laravel 14/15 and future Nova majors are not declared compatible before release and verification. Supporting an older framework here does not extend that framework's upstream security maintenance.
 
 ## Install
 
-Your application must already have a licensed Nova 5 installation and its Composer repository/authentication configured. This package does not distribute Nova or supply a Nova license.
+Your application must already have a licensed supported Nova installation and its Composer repository/authentication configured. This package does not distribute Nova or supply a Nova license.
 
 ```bash
-composer require ml-solutions/nova-logs-view:^1.0
+composer require ml-solutions/nova-logs-view:^1.1
 ```
 
 The service provider is discovered automatically. Compiled assets are included; consumers do not need Node.js or a frontend build.
@@ -65,12 +79,13 @@ composer validate --strict
 composer install --working-dir=tests
 php tests/vendor/bin/phpunit --fail-on-warning
 npm ci
+npm run install:legacy
 npm test
 npm run production
 node tests/check-dist.mjs
 ```
 
-The portable backend suite uses Laravel Testbench without proprietary Nova dependencies. Nova route/provider integration should also be checked in a licensed consuming application. Commit the compiled `dist/` assets with source changes.
+The portable backend suite uses Laravel Testbench and minimal public Nova interface doubles without proprietary Nova dependencies. To run against a licensed Nova source copy, set `NOVA_SOURCE=/path/to/nova` when invoking PHPUnit. Nova page integration should also be checked in a licensed consuming application. Commit the compiled `dist/` assets with source changes.
 
 ## Releases
 
