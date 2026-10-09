@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit bootstrap="tests/vendor/autoload.php" colors="true" cacheDirectory=".phpunit.cache">
+  <testsuites><testsuite name="Package"><file>tests/NovaLogsVisibilityTest.php</file><file>tests/AuthorizationTest.php</file></testsuite></testsuites>
+</phpunit>

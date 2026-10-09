@@ -1,0 +1,29 @@
+name: Package quality
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: composer:v2
+          coverage: none
+      - run: composer validate --strict
+      - run: composer install --working-dir=tests --no-interaction --prefer-dist
+      - run: php tests/vendor/bin/phpunit --fail-on-warning
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: node tests/check-dist.mjs
+      - run: npm run production
+      - name: Verify shipped asset integrity
+        run: node tests/check-dist.mjs

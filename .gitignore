@@ -1,0 +1,7 @@
+/node_modules/
+/vendor/
+/tests/vendor/
+/tests/composer.lock
+/.phpunit.cache/
+/.env
+/auth.json
